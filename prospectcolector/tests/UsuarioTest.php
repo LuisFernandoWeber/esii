@@ -5,7 +5,7 @@ require_once('../DAOUsuario.php');
 require_once('../models/Usuario.php');
 
 use PHPUnit\Framework\TestCase;
-use dao\DAOUsuario;
+use DAO\DAOUsuario;
 use models\Usuario;
 
 class UsuarioTest extends TestCase{
@@ -25,7 +25,4 @@ class UsuarioTest extends TestCase{
         unset($daoUsuario);
     }
 }
-
-
-
 ?>

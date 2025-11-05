@@ -113,17 +113,7 @@ class DAOProspect{
             die;
         }
 
-        
         if ($email){
-            $sql = $conn -> prepare('SELECT 
-                                        cod_prospect, 
-                                        nome, 
-                                        email, 
-                                        celular
-                                    FROM prospect;
-            ');
-        }
-        else{
             $sql = $conn -> prepare('SELECT 
                                         cod_prospect, 
                                         nome, 
@@ -134,10 +124,20 @@ class DAOProspect{
             ');
             $sql -> bind_param('s', $email);
         }
+        else{
+            $sql = $conn -> prepare('SELECT 
+                                        cod_prospect, 
+                                        nome, 
+                                        email, 
+                                        celular
+                                    FROM prospect;
+            ');
+        }
+        
         $sql -> execute();
         $resultado = $sql -> get_result();
         
-        $arayProspects = [];
+        $arrayProspects = [];
 
         while ($tupla = $resultado -> fetch_assoc()){
             $prospect = new Prospecto();
@@ -147,13 +147,13 @@ class DAOProspect{
                 $tupla['email'],
                 $tupla['celular']
             );
-            $arayProspects[] = $prospect;
+            $arrayProspects[] = $prospect;
         }
 
         $sql -> close();
         $conn -> close();
 
-        return $arayProspects; 
+        return $arrayProspects; 
     }
 
 
