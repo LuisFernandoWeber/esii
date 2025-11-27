@@ -1,175 +1,180 @@
 <?php
+
 namespace DAO;
 
-mysqli_report(MYSQLI_REPORT_STRICT);
+$separador = DIRECTORY_SEPARATOR;
+$diretorioBaSE = dirname( __FILE__ ).$separador;
 
-require_once('../models/Prospecto.php');
+require_once(__DIR__ . '/../models/Prospect.php');
 
-use models\Prospecto;
+use MODELS\Prospect;
 
 /**
- * Responsável pela comunicação com o banco de dados, oferecendo operações 
- * CRUD (Create, Read, Update, Delete) para objetos do tipo Prospect.
- * 
- * @author Luis Weber
+ * Esta classe é reponsável por fazer a comunicação com o banco de dados,
+ * provendo as funções CRUD para os Prospects
+ *
+ * @author Paulo Roberto Córdova
+ * @package DAO
  */
 class DAOProspect{
-    /**
-     * Esta função  Insere um novo prospect na tabela prospect do banco de dados
-     * @param string $nome Nome do prospect
-     * @param string $email Email do prospect
-     * @param string $celular Celular do prospect
-     * @return true|string
-     */
-    public function incluirProspect($nome, $email, $celular){
-        try{
-            $conn = $this->conectarBanco();
-        }
-        catch(\Exception $e){
-            return $e->getMessage();
-            die;
-        }
+   /**
+    * Inclui um novo prospect no banco de dados
+    * @param string $nome Nome do novo prospect
+    * @param string $email Email do novo prospect
+    * @param string $celular Celular do novo prospect
+    * @param string $facebook Endereço do facebook do novo prospect
+    * @param string $whatsapp Número do whatsapp do novo prospect
+    * @return TRUE|Exception
+    */
+   public function incluirProspect($nome, $email, $celular, $facebook, $whatsapp){
+      try {
+         $conexaoDB = $this->conectarBanco();
+      } catch (\Exception $e) {
+         die($e->getMessage());
+      }
 
-        $sql = $conn->prepare('INSERT INTO prospect(
-                                    nome,
-                                    email,
-                                    celular
-                                )VALUES 
-                                (?, ?, ?);
-        ');
-        $sql -> bind_param('sss', $nome, $email, $celular);
-        $sql -> execute();
-        
-        $sql -> close();
-        $conn -> close();
+      $sqlInsert = $conexaoDB->prepare("insert into prospect
+                                        (nome, email, celular, facebook, whatsapp)
+                                       values
+                                       (?,?,?,?,?)");
+      $sqlInsert->bind_param("sssss", $nome, $email,$celular,$facebook,$whatsapp);
+      $sqlInsert->execute();
 
-        return True;
-    }
+      if(!$sqlInsert->error){
+         $retorno = TRUE;
+      }else{
+         throw new \Exception("Não foi possível incluir novo prospect!");
+         die;
+      }
+      $conexaoDB->close();
+      $sqlInsert->close();
+      return $retorno;
+   }
+   /**
+    * Atualiza os dados de um prospect já cadastrado no banco de dados
+    * @param string $nome Novo nome para o Prospect
+    * @param string $email Novo email para o Prospect
+    * @param string $celular Novo celular para o prospect
+    * @param string $facebook Novo endereço de facebook para o Prospect
+    * @param string $whatsapp Novo número de whatsapp para o Prospect
+    * @param string $codProspect Código do Prospect que deve ser alterado
+    * @return TRUE|Exception
+    */
+   public function atualizarProspect($prospect){
+      try {
+         $conexaoDB = $this->conectarBanco();
+      } catch (\Exception $e) {
+         die($e->getMessage());
+      }
 
-    /**
-     * Esta função Atualiza os dados de um prospect existente.
-     * @param string $nome Nome do prospect
-     * @param string $email Email do prospect
-     * @param string $celular Celular do prospect
-     * @param int $codProspect Código do prospect
-     * @return true|string
-     */
-    public function atualizarProspect($nome, $email, $celular, $codProspect){
-        try{
-            $conn = $this->conectarBanco();
-        }catch(\Exception $e){
-            return $e->getMessage();
-            die;
-        }
+      $sqlUpdate = $conexaoDB->prepare("update prospect set
+                                        nome = ?,
+                                        email = ?,
+                                        celular = ?,
+                                        facebook = ?,
+                                        whatsapp = ?
+                                        where
+                                        cod_prospect = ?");
+      $sqlUpdate->bind_param("sssssi", $prospect->nome, $prospect->email,$prospect->celular,$prospect->facebook,$prospect->whatsapp, $prospect->codigo);
+      $sqlUpdate->execute();
+      echo "teste";
 
-        $sql = $conn->prepare('UPDATE prospect
-                                SET nome = ?, email = ?, celular = ?
-                                WHERE cod_prospect = ?;
-        ');
-        $sql -> bind_param('sssi', $nome, $email, $celular, $codProspect);
-        $sql -> execute();
+      if(!$sqlUpdate->error){
+         $retorno = TRUE;
+      }else{
+         throw new \Exception("Não foi possível alterar o prospect!");
+         die;
+      }
+      $conexaoDB->close();
+      $sqlUpdate->close();
+      return $retorno;
+   }
+   /**
+    * Exclui um prospect previamente cadastrado do banco de dados
+    * @param string $codProspect Código do Prospect que deve ser excluído
+    * @return TRUE|Exception
+    */
+   public function excluirProspect($codProspect){
+      try {
+         $conexaoDB = $this->conectarBanco();
+      } catch (\Exception $e) {
+         die($e->getMessage());
+      }
 
-        $sql -> close();
-        $conn -> close();
+      $sqlDelete = $conexaoDB->prepare("delete from prospect
+                                        where
+                                        cod_prospect = ?");
+      $sqlDelete->bind_param("i", $codProspect);
+      $sqlDelete->execute();
 
-        return True;
-    }
+      if(!$sqlDelete->error){
+         $retorno = TRUE;
+      }else{
+         throw new \Exception("Não foi possível excluir o prospect!");
+         die;
+      }
+      $conexaoDB->close();
+      $sqlDelete->close();
+      return $retorno;
+   }
+   /**
+    * Busca prospects do banco de dados
+    * @param string $email Email do Prospect que deve ser retornado. Este parâmetro é opcional
+    * @return Array[Prospect] Se informado email, retorna somente o prospect relacionado.
+    * Senão, retornará todos os prospects do banco de dados
+    */
+   public function buscarProspects($email=null){
+      try {
+         $conexaoDB = $this->conectarBanco();
+      } catch (\Exception $e) {
+         die($e->getMessage());
+      }
+      /*Array que será retornado com um ou mais prospects*/
+      $prospects = array();
 
-    /**
-     * @param int $codProspect Código do prospect
-     * @return true|string
-     */
-    public function excluirProspect($codProspect){
-        try{
-            $conn = $this->conectarBanco();
-        }catch(\Exception $e){
-            return $e->getMessage();
-            die;
-        }
+      if($email === null){
+         $sqlBusca = $conexaoDB->prepare("select cod_prospect, nome, email, celular,
+                                          facebook, whatsapp
+                                          from prospect");
+         $sqlBusca->execute();
+      }else{
+         $sqlBusca = $conexaoDB->prepare("select cod_prospect, nome, email, celular,
+                                          facebook, whatsapp
+                                          from prospect
+                                          where
+                                          email = ?");
+         $sqlBusca->bind_param("s", $email);
+         $sqlBusca->execute();
+      }
 
-        $sql = $conn->prepare('DELETE FROM prospect
-                                WHERE cod_prospect = ?;
-        ');
-        $sql -> bind_param('i', $codProspect);
-        $sql -> execute();
+      $resultado = $sqlBusca->get_result();
+      if($resultado->num_rows !== 0){
+         while($linha = $resultado->fetch_assoc()){
+            $prospect = new Prospect();
+            $prospect->addProspect($linha['cod_prospect'], $linha['nome'], $linha['email'], $linha['celular'],
+                                   $linha['facebook'], $linha['whatsapp']);
+            $prospects[] = $prospect;
+         }
+      }
+      return $prospects;
+      $conexaoDB->close();
+      $sqlBusca->close();
 
-        $sql -> close();
-        $conn -> close();
+   }
+   private function conectarBanco(){
+      $separador = DIRECTORY_SEPARATOR;
+      $diretorioBaSE = dirname( __FILE__ ).$separador;
 
-        return True;
-    }
+      require($diretorioBaSE . 'config.php');
 
-
-    /**
-     * Função responsável por Recupera prospects do banco de dados.
-     * @param string|null $email Email do prospect
-     * @return array
-     */
-    public function buscarProspects($email = null){
-        try{
-            $conn = $this->conectarBanco();
-        }catch(\Exception $e){
-            return $e->getMessage();
-            die;
-        }
-
-        if ($email){
-            $sql = $conn -> prepare('SELECT 
-                                        cod_prospect, 
-                                        nome, 
-                                        email, 
-                                        celular
-                                    FROM prospect
-                                    WHERE email = ?;
-            ');
-            $sql -> bind_param('s', $email);
-        }
-        else{
-            $sql = $conn -> prepare('SELECT 
-                                        cod_prospect, 
-                                        nome, 
-                                        email, 
-                                        celular
-                                    FROM prospect;
-            ');
-        }
-        
-        $sql -> execute();
-        $resultado = $sql -> get_result();
-        
-        $arrayProspects = [];
-
-        while ($tupla = $resultado -> fetch_assoc()){
-            $prospect = new Prospecto();
-            $prospect -> addProspecto(
-                $tupla['cod_prospect'],
-                $tupla['nome'],
-                $tupla['email'],
-                $tupla['celular']
-            );
-            $arrayProspects[] = $prospect;
-        }
-
-        $sql -> close();
-        $conn -> close();
-
-        return $arrayProspects; 
-    }
-
-
-    /**
-     * Estabelece a conexão com o banco de dados MySQL.
-     * @return \mysqli
-     */
-    private function conectarBanco(){
-        require_once('config.php');
-        try{
-            $conexao = new \MySQLi($dbhost, $user, $password, $banco);
-            return $conexao;
-        }catch(\mysqli_sql_exception $e){
-            throw new \Exception($e);
-            die;
-        }
-    }
+      try {
+         $conn = new \MySQLi($dbhost, $user, $password, $banco);
+         return $conn;
+      }catch (\mysqli_sql_exception $e) {
+         throw new \Exception($e);
+         die;
+      }
+   }
 }
+
 ?>

@@ -1,6 +1,6 @@
 <?php
-    $dbhost = 'localhost';
-    $user = 'root';
-    $password = '';
-    $banco = 'bd_prospects';
+   $dbhost = "localhost";
+   $banco = "bd_prospects";
+   $user = 'root';
+   $password = '';
 ?>
